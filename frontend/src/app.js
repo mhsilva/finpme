@@ -15,6 +15,7 @@ import DashboardPage from './pages/dashboard.js';
 import UploadPage from './pages/upload.js';
 import TransactionsPage from './pages/transactions.js';
 import ReportsPage from './pages/reports.js';
+import ChatPage from './pages/chat.js';
 
 // Ícones SVG inline simples
 const icons = {
@@ -22,6 +23,7 @@ const icons = {
   upload: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>`,
   transactions: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`,
   reports: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
+  chat: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`,
   logout: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
 };
 
@@ -30,6 +32,7 @@ const NAVEGACAO = [
   { rota: '/upload',       label: 'Upload',       icon: icons.upload },
   { rota: '/transactions', label: 'Lançamentos',  icon: icons.transactions },
   { rota: '/reports',      label: 'Relatórios',   icon: icons.reports },
+  { rota: '/chat',         label: 'Agente IA',    icon: icons.chat },
 ];
 
 function Sidebar({ rotaAtual, onNavegar, onSair }) {
@@ -130,13 +133,14 @@ function App() {
     case '/upload':       PaginaAtual = UploadPage; break;
     case '/transactions': PaginaAtual = TransactionsPage; break;
     case '/reports':      PaginaAtual = ReportsPage; break;
+    case '/chat':         PaginaAtual = ChatPage; break;
     default:              PaginaAtual = DashboardPage;
   }
 
   return html`
     <div class="flex h-screen overflow-hidden">
       <${Sidebar} rotaAtual=${rota} onNavegar=${navegar} onSair=${sair} />
-      <main class="flex-1 overflow-auto bg-gray-50">
+      <main class=${'flex-1 bg-gray-50' + (rota === '/chat' ? ' overflow-hidden flex flex-col' : ' overflow-auto')}>
         <${PaginaAtual} sessao=${sessao} />
       </main>
     </div>

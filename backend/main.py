@@ -68,8 +68,12 @@ async def autenticar_requisicao(request: Request, call_next):
     """Valida JWT do Supabase em todas as rotas protegidas."""
     caminho = request.url.path
 
-    # Libera rotas públicas sem autenticação
-    if caminho in ROTAS_PUBLICAS or any(caminho.startswith(p) for p in PREFIXOS_PUBLICOS):
+    # Libera preflight CORS e rotas públicas sem autenticação
+    if (
+        request.method == "OPTIONS"
+        or caminho in ROTAS_PUBLICAS
+        or any(caminho.startswith(p) for p in PREFIXOS_PUBLICOS)
+    ):
         return await call_next(request)
 
     authorization = request.headers.get("Authorization", "")

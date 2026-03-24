@@ -119,6 +119,57 @@ export function sendChatMessage(message, context = {}) {
   });
 }
 
+/**
+ * Envia mensagens para o agente com streaming SSE.
+ * @param {Array}    messages      - Histórico [{role, content}, ...]
+ * @param {Function} onChunk       - Chamado com cada fragmento de texto
+ * @param {Function} onToolStart   - Chamado quando uma ferramenta começa (nome)
+ * @param {Function} onToolResult  - Chamado quando ferramenta termina (nome, result)
+ */
+export async function sendAgentMessage(messages, onChunk, onToolStart, onToolResult) {
+  const token = await getToken();
+
+  const resposta = await fetch(`${API_URL}/ai/agent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!resposta.ok) {
+    const corpo = await resposta.json().catch(() => ({}));
+    throw new Error(corpo.detail || `Erro ${resposta.status}`);
+  }
+
+  const reader = resposta.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const linhas = buffer.split('\n');
+    buffer = linhas.pop(); // mantém linha incompleta no buffer
+
+    for (const linha of linhas) {
+      if (!linha.startsWith('data: ')) continue;
+      try {
+        const evento = JSON.parse(linha.slice(6));
+        if (evento.type === 'text')        onChunk?.(evento.content);
+        else if (evento.type === 'tool_start')  onToolStart?.(evento.name);
+        else if (evento.type === 'tool_result') onToolResult?.(evento.name, evento.result);
+        else if (evento.type === 'error')  throw new Error(evento.message);
+      } catch (e) {
+        if (e.message && !e.message.startsWith('JSON')) throw e;
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------

@@ -186,6 +186,15 @@ class ChatResponse(BaseModel):
     sources: Optional[list[str]] = None
 
 
+class HistoryMessage(BaseModel):
+    role: str   # "user" ou "assistant"
+    content: str
+
+
+class AgentChatRequest(BaseModel):
+    messages: list[HistoryMessage]
+
+
 # ---------------------------------------------------------------------------
 # Plano de contas
 # ---------------------------------------------------------------------------
