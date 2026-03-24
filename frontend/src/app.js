@@ -60,7 +60,11 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
           <a
             key=${item.rota}
             href="#"
-            class=${'sidebar-link' + (rotaAtual === item.rota ? ' active' : '')}
+            class=${`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              rotaAtual === item.rota
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
             onClick=${(e) => { e.preventDefault(); onNavegar(item.rota); }}
           >
             ${item.icon}
@@ -73,7 +77,7 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
       <div class="px-3 py-3 border-t border-gray-100">
         <button
           onClick=${onSair}
-          class="sidebar-link w-full hover:bg-red-50 hover:text-red-600"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-600 hover:bg-red-50 hover:text-red-600"
         >
           ${icons.logout}
           Sair
