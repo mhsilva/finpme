@@ -1,0 +1,37 @@
+# Ambiente Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+
+# Variáveis de ambiente e arquivos com segredos (NUNCA commitar)
+.env
+.env.local
+backend/.env
+backend/.env.local
+db-pass
+
+# Config local do frontend
+frontend/env.js
+
+# Supabase local
+.branches/
+.temp/
+
+# Node (para npx serve etc.)
+node_modules/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

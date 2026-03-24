@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinPME – Inteligência Financeira para PMEs</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Preact via CDN (ES Modules) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "preact":           "https://esm.sh/preact@10.23.1",
+      "preact/hooks":     "https://esm.sh/preact@10.23.1/hooks",
+      "htm/preact":       "https://esm.sh/htm@3.1.1/preact",
+      "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4"
+    }
+  }
+  </script>
+
+  <style>
+    /* Estilos base para evitar flash de conteúdo não estilizado */
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    #app { min-height: 100vh; }
+    .sidebar-link { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors; }
+    .sidebar-link:hover { @apply bg-gray-100 text-gray-900; }
+    .sidebar-link.active { @apply bg-brand-50 text-brand-700; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div id="app">
+    <!-- Carregando... -->
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-gray-500 text-sm">Carregando FinPME...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuração do ambiente (crie env.js a partir de env.example.js) -->
+  <script src="./env.js" onerror="console.warn('env.js não encontrado. Copie frontend/env.example.js para frontend/env.js')"></script>
+
+  <!-- Ponto de entrada da aplicação -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
