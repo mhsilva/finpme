@@ -96,6 +96,46 @@ FERRAMENTAS = [
         },
     },
     {
+        "name": "listar_pendentes",
+        "description": (
+            "Lista transações ainda não confirmadas pelo usuário (confirmed = false). "
+            "Use quando o usuário perguntar quais pagamentos estão pendentes ou precisam de confirmação. "
+            "Retorna os IDs necessários para confirmar via confirmar_transacao."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "inicio": {
+                    "type": "string",
+                    "description": "Data de início no formato YYYY-MM-DD (opcional)",
+                },
+                "fim": {
+                    "type": "string",
+                    "description": "Data de fim no formato YYYY-MM-DD (opcional)",
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "confirmar_transacao",
+        "description": (
+            "Confirma uma ou mais transações pelo ID, marcando-as como verificadas pelo usuário. "
+            "Use após listar_pendentes quando o usuário pedir para confirmar pagamentos específicos."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "transaction_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Lista de IDs das transações a confirmar",
+                },
+            },
+            "required": ["transaction_ids"],
+        },
+    },
+    {
         "name": "resumo_periodo",
         "description": (
             "Retorna um resumo financeiro rápido de um período: receita total, despesas totais, "
@@ -136,6 +176,10 @@ def execute_tool(nome: str, parametros: dict, tenant_id: str) -> Any:
             return _tool_gerar_fluxo_caixa(parametros, tenant_id)
         elif nome == "buscar_transacoes":
             return _tool_buscar_transacoes(parametros, tenant_id)
+        elif nome == "listar_pendentes":
+            return _tool_listar_pendentes(parametros, tenant_id)
+        elif nome == "confirmar_transacao":
+            return _tool_confirmar_transacao(parametros, tenant_id)
         elif nome == "resumo_periodo":
             return _tool_resumo_periodo(parametros, tenant_id)
         else:
@@ -195,6 +239,71 @@ def _tool_buscar_transacoes(parametros: dict, tenant_id: str) -> dict:
             }
             for t in transacoes
         ],
+    }
+
+
+def _tool_listar_pendentes(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+
+    query = (
+        client.table("transactions")
+        .select("id, date, description, amount, category")
+        .eq("tenant_id", tenant_id)
+        .eq("confirmed", False)
+        .order("date", desc=True)
+        .limit(50)
+    )
+
+    if parametros.get("inicio"):
+        query = query.gte("date", parametros["inicio"])
+    if parametros.get("fim"):
+        query = query.lte("date", parametros["fim"])
+
+    resultado = query.execute()
+    transacoes = resultado.data or []
+
+    return {
+        "total": len(transacoes),
+        "pendentes": [
+            {
+                "id": t["id"],
+                "data": t["date"],
+                "descricao": t["description"],
+                "valor": float(t["amount"]),
+                "categoria": t.get("category") or "Não categorizado",
+            }
+            for t in transacoes
+        ],
+    }
+
+
+def _tool_confirmar_transacao(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+    ids = parametros.get("transaction_ids", [])
+    confirmados = []
+    nao_encontrados = []
+
+    for tid in ids:
+        try:
+            resultado = (
+                client.table("transactions")
+                .update({"confirmed": True})
+                .eq("id", tid)
+                .eq("tenant_id", tenant_id)  # garante isolamento por tenant
+                .execute()
+            )
+            if resultado.data:
+                confirmados.append(tid)
+            else:
+                nao_encontrados.append(tid)
+        except Exception as e:
+            logger.error(f"Erro ao confirmar transação {tid}: {e}")
+            nao_encontrados.append(tid)
+
+    return {
+        "confirmados": len(confirmados),
+        "nao_encontrados": len(nao_encontrados),
+        "mensagem": f"{len(confirmados)} transação(ões) confirmada(s) com sucesso.",
     }
 
 
