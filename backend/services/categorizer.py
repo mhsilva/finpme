@@ -15,7 +15,7 @@ from db.supabase import get_chart_of_accounts, get_supabase_client
 
 logger = logging.getLogger(__name__)
 
-MODELO_CLAUDE = "claude-sonnet-4-20250514"
+MODELO_CLAUDE = "claude-haiku-4-5-20251001"
 TAMANHO_LOTE = 50
 TIMEOUT_ANTHROPIC = 30
 MAX_TENTATIVAS = 3

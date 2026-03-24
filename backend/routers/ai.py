@@ -20,7 +20,7 @@ from services.agent_tools import FERRAMENTAS, execute_tool
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-MODELO_CLAUDE = "claude-sonnet-4-20250514"
+MODELO_CLAUDE = "claude-haiku-4-5-20251001"
 MAX_ITERACOES = 5  # Evita loop infinito de tool use
 
 
