@@ -37,17 +37,25 @@ const NAVEGACAO = [
 
 function Sidebar({ rotaAtual, onNavegar, onSair }) {
   return html`
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+    <aside class="w-56 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
       <!-- Logo -->
-      <div class="px-6 py-5 border-b border-gray-200">
-        <h1 class="text-xl font-bold text-brand-700">
-          Fin<span class="text-gray-900">PME</span>
-        </h1>
-        <p class="text-xs text-gray-400 mt-0.5">Inteligência Financeira</p>
+      <div class="px-5 py-5 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900 leading-none">FinPME</p>
+            <p class="text-xs text-gray-400 mt-0.5 leading-none">Finanças inteligentes</p>
+          </div>
+        </div>
       </div>
 
       <!-- Links de navegação -->
-      <nav class="flex-1 px-3 py-4 space-y-1">
+      <nav class="flex-1 px-3 py-3 space-y-0.5">
         ${NAVEGACAO.map(item => html`
           <a
             key=${item.rota}
@@ -62,10 +70,10 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
       </nav>
 
       <!-- Rodapé -->
-      <div class="px-3 py-4 border-t border-gray-200">
+      <div class="px-3 py-3 border-t border-gray-100">
         <button
           onClick=${onSair}
-          class="sidebar-link w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+          class="sidebar-link w-full hover:bg-red-50 hover:text-red-600"
         >
           ${icons.logout}
           Sair
