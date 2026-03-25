@@ -38,7 +38,6 @@ const NAVEGACAO_PRINCIPAL = [
 ];
 
 const NAVEGACAO_FINANCEIRO = [
-  { rota: '/transactions',             label: 'Lançamentos',      icon: icons.transactions },
   { rota: '/reports',                  label: 'Relatórios',       icon: icons.reports },
   { rota: '/financeiro/contas',        label: 'Contas P/R',       icon: icons.contas },
   { rota: '/financeiro/conciliacao',   label: 'Conciliação',      icon: icons.conciliacao },
@@ -46,7 +45,8 @@ const NAVEGACAO_FINANCEIRO = [
 ];
 
 const NAVEGACAO_IMPORTACAO = [
-  { rota: '/upload', label: 'Upload', icon: icons.upload },
+  { rota: '/upload',        label: 'Upload',       icon: icons.upload },
+  { rota: '/transactions',  label: 'Lançamentos',  icon: icons.transactions },
 ];
 
 const NAVEGACAO_BOTTOM = [
@@ -112,7 +112,7 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
 
         <!-- Seção Importação -->
         <div class="pt-3 pb-1">
-          <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Importação</p>
+          <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Importação & Revisão</p>
         </div>
         ${NAVEGACAO_IMPORTACAO.map(item => html`
           <a
