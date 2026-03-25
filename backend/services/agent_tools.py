@@ -231,6 +231,130 @@ FERRAMENTAS = [
         },
     },
     {
+        "name": "lancar_transacao",
+        "description": (
+            "Cria um lançamento financeiro manual (entrada ou saída de caixa). "
+            "Use quando o usuário quiser registrar um pagamento, recebimento ou qualquer movimentação "
+            "que não veio de extrato importado. Exemplos: 'lança uma saída de 500 reais de aluguel', "
+            "'registra entrada de 3000 de venda'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "description": "Data da transação no formato YYYY-MM-DD",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Descrição do lançamento",
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Valor: positivo = entrada/crédito, negativo = saída/débito",
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Categoria do lançamento (opcional, ex: Aluguel, Vendas, Salários)",
+                },
+            },
+            "required": ["date", "description", "amount"],
+        },
+    },
+    {
+        "name": "criar_conta_pagar",
+        "description": (
+            "Registra uma nova conta a pagar (obrigação futura). "
+            "Use quando o usuário mencionar uma fatura, boleto, fornecedor ou qualquer pagamento "
+            "que ainda vai acontecer. Exemplos: 'cria conta pra pagar fornecedor X 1500 reais', "
+            "'registra boleto de energia 280 reais vence dia 10'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "Descrição da conta",
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Valor positivo a pagar",
+                },
+                "due_date": {
+                    "type": "string",
+                    "description": "Data de vencimento no formato YYYY-MM-DD",
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Nome do fornecedor ou credor (opcional)",
+                },
+                "notes": {
+                    "type": "string",
+                    "description": "Observações adicionais (opcional)",
+                },
+            },
+            "required": ["description", "amount", "due_date"],
+        },
+    },
+    {
+        "name": "criar_conta_receber",
+        "description": (
+            "Registra uma nova conta a receber (recebimento futuro). "
+            "Use quando o usuário mencionar uma venda a prazo, cobrança ou qualquer recebimento "
+            "que ainda vai acontecer. Exemplos: 'cria conta a receber do cliente Y 2000 reais', "
+            "'registra NF de venda 5000 reais vence semana que vem'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "Descrição da conta",
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Valor positivo a receber",
+                },
+                "due_date": {
+                    "type": "string",
+                    "description": "Data de vencimento/previsão no formato YYYY-MM-DD",
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Nome do cliente ou devedor (opcional)",
+                },
+                "notes": {
+                    "type": "string",
+                    "description": "Observações adicionais (opcional)",
+                },
+            },
+            "required": ["description", "amount", "due_date"],
+        },
+    },
+    {
+        "name": "registrar_pagamento",
+        "description": (
+            "Marca uma conta a pagar ou receber como paga/recebida. "
+            "Use quando o usuário disser que pagou uma conta ou recebeu um valor. "
+            "Precisa do ID da conta — use listar_contas_pagar ou listar_contas_receber primeiro "
+            "para obter o ID se necessário."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "conta_id": {
+                    "type": "string",
+                    "description": "ID (UUID) da conta a pagar ou receber",
+                },
+                "paid_date": {
+                    "type": "string",
+                    "description": "Data do pagamento no formato YYYY-MM-DD (padrão: hoje)",
+                },
+            },
+            "required": ["conta_id"],
+        },
+    },
+    {
         "name": "resumo_periodo",
         "description": (
             "Retorna um resumo financeiro rápido de um período: receita total, despesas totais, "
@@ -289,6 +413,14 @@ def execute_tool(nome: str, parametros: dict, tenant_id: str) -> Any:
             return _tool_listar_contas(parametros, tenant_id, tipo="receivable")
         elif nome == "alertas_vencimento":
             return _tool_alertas_vencimento(parametros, tenant_id)
+        elif nome == "lancar_transacao":
+            return _tool_lancar_transacao(parametros, tenant_id)
+        elif nome == "criar_conta_pagar":
+            return _tool_criar_conta_pr(parametros, tenant_id, tipo="payable")
+        elif nome == "criar_conta_receber":
+            return _tool_criar_conta_pr(parametros, tenant_id, tipo="receivable")
+        elif nome == "registrar_pagamento":
+            return _tool_registrar_pagamento(parametros, tenant_id)
         else:
             return {"erro": f"Ferramenta desconhecida: {nome}"}
     except Exception as e:
@@ -634,6 +766,82 @@ def _tool_resumo_centro_custo(parametros: dict, tenant_id: str) -> dict:
             key=lambda x: x["total"],
             reverse=True,
         )[:5],
+    }
+
+
+def _tool_lancar_transacao(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+    registro = {
+        "tenant_id":      tenant_id,
+        "date":           parametros["date"],
+        "description":    parametros["description"],
+        "amount":         float(parametros["amount"]),
+        "category":       parametros.get("category"),
+        "source":         "manual_agent",
+        "ai_categorized": False,
+        "confirmed":      True,
+    }
+    res = client.table("transactions").insert(registro).execute()
+    if not res.data:
+        return {"erro": "Falha ao criar lançamento"}
+    criado = res.data[0]
+    tipo = "entrada" if float(parametros["amount"]) > 0 else "saída"
+    return {
+        "id": criado["id"],
+        "mensagem": f"Lançamento de {tipo} criado com sucesso.",
+        "descricao": criado["description"],
+        "valor": float(criado["amount"]),
+        "data": criado["date"],
+    }
+
+
+def _tool_criar_conta_pr(parametros: dict, tenant_id: str, tipo: str) -> dict:
+    client = get_supabase_client()
+    registro = {
+        "tenant_id":    tenant_id,
+        "type":         tipo,
+        "description":  parametros["description"],
+        "amount":       float(parametros["amount"]),
+        "due_date":     parametros["due_date"],
+        "contact_name": parametros.get("contact_name"),
+        "notes":        parametros.get("notes"),
+        "status":       "pending",
+    }
+    res = client.table("payables_receivables").insert(registro).execute()
+    if not res.data:
+        return {"erro": "Falha ao criar conta"}
+    criado = res.data[0]
+    label = "pagar" if tipo == "payable" else "receber"
+    return {
+        "id": criado["id"],
+        "mensagem": f"Conta a {label} criada com sucesso.",
+        "descricao": criado["description"],
+        "valor": float(criado["amount"]),
+        "vencimento": criado["due_date"],
+    }
+
+
+def _tool_registrar_pagamento(parametros: dict, tenant_id: str) -> dict:
+    from datetime import date as _date
+    client = get_supabase_client()
+    conta_id = parametros["conta_id"]
+    paid_date = parametros.get("paid_date") or _date.today().isoformat()
+
+    res = (
+        client.table("payables_receivables")
+        .update({"status": "paid", "paid_date": paid_date})
+        .eq("id", conta_id)
+        .eq("tenant_id", tenant_id)
+        .execute()
+    )
+    if not res.data:
+        return {"erro": f"Conta {conta_id} não encontrada ou sem permissão"}
+    conta = res.data[0]
+    label = "pagar" if conta["type"] == "payable" else "receber"
+    return {
+        "mensagem": f"Conta a {label} '{conta['description']}' marcada como paga.",
+        "valor": float(conta["amount"]),
+        "data_pagamento": paid_date,
     }
 
 
