@@ -217,6 +217,71 @@ export function cancelarConta(id, todasParcelas = false) {
 }
 
 // ---------------------------------------------------------------------------
+// Financeiro — Conciliação Bancária
+// ---------------------------------------------------------------------------
+
+export function getConciliacaoStats() {
+  return apiFetch('/financeiro/conciliacao/stats');
+}
+
+export function getConciliacaoPendentes(filtros = {}) {
+  const params = new URLSearchParams();
+  if (filtros.inicio) params.set('inicio', filtros.inicio);
+  if (filtros.fim)    params.set('fim', filtros.fim);
+  const q = params.toString() ? `?${params}` : '';
+  return apiFetch(`/financeiro/conciliacao/pendentes${q}`);
+}
+
+export function getConciliacaoSugestoes(filtros = {}) {
+  const params = new URLSearchParams();
+  if (filtros.transaction_id) params.set('transaction_id', filtros.transaction_id);
+  if (filtros.score_min)      params.set('score_min', filtros.score_min);
+  const q = params.toString() ? `?${params}` : '';
+  return apiFetch(`/financeiro/conciliacao/sugestoes${q}`);
+}
+
+export function confirmarConciliacao(transactionId, payableReceivableId) {
+  return apiFetch(
+    `/financeiro/conciliacao/confirmar?transaction_id=${transactionId}&payable_receivable_id=${payableReceivableId}`,
+    { method: 'POST' },
+  );
+}
+
+export function autoConciliar(scoreMin = 0.80) {
+  return apiFetch(`/financeiro/conciliacao/auto?score_min=${scoreMin}`, { method: 'POST' });
+}
+
+export function desfazerConciliacao(matchId) {
+  return apiFetch(`/financeiro/conciliacao/${matchId}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
+// Financeiro — Contas Bancárias
+// ---------------------------------------------------------------------------
+
+export function getContasBancarias() {
+  return apiFetch('/financeiro/contas-bancarias');
+}
+
+export function createContaBancaria(dados) {
+  return apiFetch('/financeiro/contas-bancarias', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function updateContaBancaria(id, dados) {
+  return apiFetch(`/financeiro/contas-bancarias/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function deleteContaBancaria(id) {
+  return apiFetch(`/financeiro/contas-bancarias/${id}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
 // Financeiro — Centros de Custo
 // ---------------------------------------------------------------------------
 

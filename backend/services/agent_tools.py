@@ -162,6 +162,19 @@ FERRAMENTAS = [
         },
     },
     {
+        "name": "resumo_conciliacao",
+        "description": (
+            "Retorna o status da conciliação bancária: quantas transações estão conciliadas, "
+            "pendentes e o percentual de cobertura. "
+            "Use quando o usuário perguntar sobre a saúde da conciliação ou lançamentos não conciliados."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
         "name": "listar_contas_pagar",
         "description": (
             "Lista contas a pagar com filtros por status e período de vencimento. "
@@ -268,6 +281,8 @@ def execute_tool(nome: str, parametros: dict, tenant_id: str) -> Any:
             return _tool_resumo_centro_custo(parametros, tenant_id)
         elif nome == "listar_centros_custo":
             return _tool_listar_centros_custo(parametros, tenant_id)
+        elif nome == "resumo_conciliacao":
+            return _tool_resumo_conciliacao(parametros, tenant_id)
         elif nome == "listar_contas_pagar":
             return _tool_listar_contas(parametros, tenant_id, tipo="payable")
         elif nome == "listar_contas_receber":
@@ -396,6 +411,34 @@ def _tool_confirmar_transacao(parametros: dict, tenant_id: str) -> dict:
         "confirmados": len(confirmados),
         "nao_encontrados": len(nao_encontrados),
         "mensagem": f"{len(confirmados)} transação(ões) confirmada(s) com sucesso.",
+    }
+
+
+def _tool_resumo_conciliacao(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+
+    total_res = (
+        client.table("transactions")
+        .select("id", count="exact")
+        .eq("tenant_id", tenant_id)
+        .execute()
+    )
+    conc_res = (
+        client.table("reconciliation_matches")
+        .select("id", count="exact")
+        .eq("tenant_id", tenant_id)
+        .execute()
+    )
+    total       = total_res.count or 0
+    conciliadas = conc_res.count or 0
+    pendentes   = total - conciliadas
+
+    return {
+        "total_transacoes":  total,
+        "conciliadas":       conciliadas,
+        "nao_conciliadas":   pendentes,
+        "pct_conciliado":    round((conciliadas / total * 100) if total > 0 else 0, 1),
+        "status": "ok" if pendentes == 0 else ("atencao" if pendentes <= 10 else "critico"),
     }
 
 
