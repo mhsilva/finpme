@@ -162,6 +162,50 @@ FERRAMENTAS = [
         },
     },
     {
+        "name": "listar_contas_pagar",
+        "description": (
+            "Lista contas a pagar com filtros por status e período de vencimento. "
+            "Use quando o usuário perguntar sobre pagamentos futuros, obrigações, boletos ou fornecedores."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "inicio": {"type": "string", "description": "Data de início (YYYY-MM-DD)"},
+                "fim":    {"type": "string", "description": "Data de fim (YYYY-MM-DD)"},
+                "status": {"type": "string", "enum": ["pending", "overdue", "paid", "partial"], "description": "Filtro de status (opcional)"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "listar_contas_receber",
+        "description": (
+            "Lista contas a receber com filtros por status e período de vencimento. "
+            "Use quando o usuário perguntar sobre recebíveis, clientes, entradas previstas ou inadimplência."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "inicio": {"type": "string", "description": "Data de início (YYYY-MM-DD)"},
+                "fim":    {"type": "string", "description": "Data de fim (YYYY-MM-DD)"},
+                "status": {"type": "string", "enum": ["pending", "overdue", "paid", "partial"], "description": "Filtro de status (opcional)"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "alertas_vencimento",
+        "description": (
+            "Retorna contas vencidas e contas que vencem nos próximos 7 dias (a pagar e a receber). "
+            "Use quando o usuário perguntar sobre urgências, o que precisa pagar esta semana ou alertas financeiros."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
         "name": "listar_centros_custo",
         "description": (
             "Lista todos os centros de custo ativos da empresa. "
@@ -224,6 +268,12 @@ def execute_tool(nome: str, parametros: dict, tenant_id: str) -> Any:
             return _tool_resumo_centro_custo(parametros, tenant_id)
         elif nome == "listar_centros_custo":
             return _tool_listar_centros_custo(parametros, tenant_id)
+        elif nome == "listar_contas_pagar":
+            return _tool_listar_contas(parametros, tenant_id, tipo="payable")
+        elif nome == "listar_contas_receber":
+            return _tool_listar_contas(parametros, tenant_id, tipo="receivable")
+        elif nome == "alertas_vencimento":
+            return _tool_alertas_vencimento(parametros, tenant_id)
         else:
             return {"erro": f"Ferramenta desconhecida: {nome}"}
     except Exception as e:
@@ -346,6 +396,122 @@ def _tool_confirmar_transacao(parametros: dict, tenant_id: str) -> dict:
         "confirmados": len(confirmados),
         "nao_encontrados": len(nao_encontrados),
         "mensagem": f"{len(confirmados)} transação(ões) confirmada(s) com sucesso.",
+    }
+
+
+def _tool_listar_contas(parametros: dict, tenant_id: str, tipo: str) -> dict:
+    from datetime import date as _date
+    client = get_supabase_client()
+
+    # Auto-atualiza vencidas
+    hoje = _date.today().isoformat()
+    client.table("payables_receivables").update({"status": "overdue"}).eq(
+        "tenant_id", tenant_id
+    ).eq("status", "pending").lt("due_date", hoje).execute()
+
+    query = (
+        client.table("payables_receivables")
+        .select("id, description, amount, due_date, paid_date, status, contact_name, installments_total, installments_num")
+        .eq("tenant_id", tenant_id)
+        .eq("type", tipo)
+        .neq("status", "cancelled")
+        .order("due_date")
+        .limit(50)
+    )
+    if parametros.get("inicio"):
+        query = query.gte("due_date", parametros["inicio"])
+    if parametros.get("fim"):
+        query = query.lte("due_date", parametros["fim"])
+    if parametros.get("status"):
+        query = query.eq("status", parametros["status"])
+
+    res = query.execute()
+    contas = res.data or []
+
+    total = sum(float(c["amount"]) for c in contas if c["status"] != "paid")
+    label = "pagar" if tipo == "payable" else "receber"
+
+    return {
+        "total_contas": len(contas),
+        f"total_a_{label}": round(total, 2),
+        "contas": [
+            {
+                "id": c["id"],
+                "descricao": c["description"],
+                "valor": float(c["amount"]),
+                "vencimento": c["due_date"],
+                "status": c["status"],
+                "contato": c.get("contact_name"),
+                "parcela": f"{c['installments_num']}/{c['installments_total']}" if c["installments_total"] > 1 else None,
+            }
+            for c in contas
+        ],
+    }
+
+
+def _tool_alertas_vencimento(parametros: dict, tenant_id: str) -> dict:
+    from datetime import date as _date, timedelta
+    client = get_supabase_client()
+
+    hoje = _date.today()
+    em7dias = (hoje + timedelta(days=7)).isoformat()
+    hoje_str = hoje.isoformat()
+
+    # Auto-atualiza vencidas
+    client.table("payables_receivables").update({"status": "overdue"}).eq(
+        "tenant_id", tenant_id
+    ).eq("status", "pending").lt("due_date", hoje_str).execute()
+
+    # Vencidas (overdue)
+    vencidas_res = (
+        client.table("payables_receivables")
+        .select("type, description, amount, due_date, contact_name")
+        .eq("tenant_id", tenant_id)
+        .eq("status", "overdue")
+        .order("due_date")
+        .limit(20)
+        .execute()
+    )
+
+    # Próximos 7 dias
+    proximas_res = (
+        client.table("payables_receivables")
+        .select("type, description, amount, due_date, contact_name")
+        .eq("tenant_id", tenant_id)
+        .eq("status", "pending")
+        .gte("due_date", hoje_str)
+        .lte("due_date", em7dias)
+        .order("due_date")
+        .limit(20)
+        .execute()
+    )
+
+    vencidas = vencidas_res.data or []
+    proximas = proximas_res.data or []
+
+    total_vencido   = sum(float(c["amount"]) for c in vencidas)
+    total_proximos  = sum(float(c["amount"]) for c in proximas)
+
+    def fmt(c):
+        return {
+            "tipo": "pagar" if c["type"] == "payable" else "receber",
+            "descricao": c["description"],
+            "valor": float(c["amount"]),
+            "vencimento": c["due_date"],
+            "contato": c.get("contact_name"),
+        }
+
+    return {
+        "vencidas": {
+            "total_registros": len(vencidas),
+            "total_valor": round(total_vencido, 2),
+            "contas": [fmt(c) for c in vencidas],
+        },
+        "proximas_7_dias": {
+            "total_registros": len(proximas),
+            "total_valor": round(total_proximos, 2),
+            "contas": [fmt(c) for c in proximas],
+        },
     }
 
 

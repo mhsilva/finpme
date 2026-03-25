@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from routers import ai, auth, reports, transactions, upload
-from routers.financeiro import centros_custo
+from routers.financeiro import centros_custo, payables
 
 load_dotenv()
 
@@ -34,6 +34,7 @@ app = FastAPI(
     title="FinPME API",
     description="API de inteligência financeira para PMEs brasileiras",
     version="0.1.0",
+    redirect_slashes=False,
 )
 
 # ---------------------------------------------------------------------------
@@ -139,6 +140,11 @@ app.include_router(
     centros_custo.router,
     prefix="/financeiro/centros-custo",
     tags=["Financeiro — Centros de Custo"],
+)
+app.include_router(
+    payables.router,
+    prefix="/financeiro/contas",
+    tags=["Financeiro — Contas a Pagar/Receber"],
 )
 
 
