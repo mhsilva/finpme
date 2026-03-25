@@ -34,6 +34,7 @@ app = FastAPI(
     title="FinPME API",
     description="API de inteligência financeira para PMEs brasileiras",
     version="0.1.0",
+    redirect_slashes=False,
 )
 
 # ---------------------------------------------------------------------------
