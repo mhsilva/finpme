@@ -32,15 +32,18 @@ const icons = {
 };
 
 const NAVEGACAO_PRINCIPAL = [
-  { rota: '/dashboard',    label: 'Dashboard',    icon: icons.dashboard },
-  { rota: '/upload',       label: 'Upload',       icon: icons.upload },
-  { rota: '/transactions', label: 'Lançamentos',  icon: icons.transactions },
-  { rota: '/reports',      label: 'Relatórios',   icon: icons.reports },
+  { rota: '/dashboard', label: 'Dashboard', icon: icons.dashboard },
 ];
 
 const NAVEGACAO_FINANCEIRO = [
+  { rota: '/transactions',             label: 'Lançamentos',      icon: icons.transactions },
+  { rota: '/reports',                  label: 'Relatórios',       icon: icons.reports },
   { rota: '/financeiro/contas',        label: 'Contas P/R',       icon: icons.contas },
   { rota: '/financeiro/centros-custo', label: 'Centros de Custo', icon: icons.centros },
+];
+
+const NAVEGACAO_IMPORTACAO = [
+  { rota: '/upload', label: 'Upload', icon: icons.upload },
 ];
 
 const NAVEGACAO_BOTTOM = [
@@ -89,6 +92,26 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
           <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financeiro</p>
         </div>
         ${NAVEGACAO_FINANCEIRO.map(item => html`
+          <a
+            key=${item.rota}
+            href="#"
+            class=${`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              rotaAtual === item.rota
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            onClick=${(e) => { e.preventDefault(); onNavegar(item.rota); }}
+          >
+            ${item.icon}
+            ${item.label}
+          </a>
+        `)}
+
+        <!-- Seção Importação -->
+        <div class="pt-3 pb-1">
+          <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Importação</p>
+        </div>
+        ${NAVEGACAO_IMPORTACAO.map(item => html`
           <a
             key=${item.rota}
             href="#"
