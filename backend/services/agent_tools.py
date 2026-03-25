@@ -233,10 +233,11 @@ FERRAMENTAS = [
     {
         "name": "lancar_transacao",
         "description": (
-            "Cria um lançamento financeiro manual (entrada ou saída de caixa). "
-            "Use quando o usuário quiser registrar um pagamento, recebimento ou qualquer movimentação "
-            "que não veio de extrato importado. Exemplos: 'lança uma saída de 500 reais de aluguel', "
-            "'registra entrada de 3000 de venda'."
+            "Cria um lançamento de movimentação bancária manual — dinheiro que JÁ SAIU ou JÁ ENTROU "
+            "na conta mas não veio de extrato importado (ex: saque, depósito em dinheiro, taxa bancária). "
+            "NÃO use para vendas, compras, faturas ou obrigações futuras — para isso use "
+            "criar_conta_receber ou criar_conta_pagar. "
+            "Exemplos corretos: 'taxa de manutenção bancária de 30 reais', 'saque de 200 reais'."
         ),
         "input_schema": {
             "type": "object",
@@ -264,10 +265,11 @@ FERRAMENTAS = [
     {
         "name": "criar_conta_pagar",
         "description": (
-            "Registra uma nova conta a pagar (obrigação futura). "
-            "Use quando o usuário mencionar uma fatura, boleto, fornecedor ou qualquer pagamento "
-            "que ainda vai acontecer. Exemplos: 'cria conta pra pagar fornecedor X 1500 reais', "
-            "'registra boleto de energia 280 reais vence dia 10'."
+            "Registra uma compra, despesa ou obrigação de pagar — qualquer coisa que a empresa "
+            "COMPROU ou tem que PAGAR a alguém (fornecedor, boleto, fatura, serviço contratado). "
+            "Use para: compras, notas fiscais de entrada, aluguel, salários, qualquer fornecedor. "
+            "Exemplos: 'fizemos uma compra de 500 reais', 'chegou boleto de energia 280 reais', "
+            "'contratamos serviço de marketing por 1500 reais'."
         ),
         "input_schema": {
             "type": "object",
@@ -299,10 +301,11 @@ FERRAMENTAS = [
     {
         "name": "criar_conta_receber",
         "description": (
-            "Registra uma nova conta a receber (recebimento futuro). "
-            "Use quando o usuário mencionar uma venda a prazo, cobrança ou qualquer recebimento "
-            "que ainda vai acontecer. Exemplos: 'cria conta a receber do cliente Y 2000 reais', "
-            "'registra NF de venda 5000 reais vence semana que vem'."
+            "Registra uma venda ou direito de receber — qualquer coisa que a empresa "
+            "VENDEU ou vai RECEBER de alguém (cliente, NF emitida, serviço prestado). "
+            "Use para: vendas, notas fiscais de saída, prestação de serviços, qualquer cliente. "
+            "Exemplos: 'fizemos uma venda de 3000 reais', 'emitimos NF para cliente X de 8000 reais', "
+            "'prestamos serviço para Y e vamos receber 2500 reais'."
         ),
         "input_schema": {
             "type": "object",
@@ -779,7 +782,7 @@ def _tool_lancar_transacao(parametros: dict, tenant_id: str) -> dict:
         "category":       parametros.get("category"),
         "source":         "manual_agent",
         "ai_categorized": False,
-        "confirmed":      True,
+        "confirmed":      False,
     }
     res = client.table("transactions").insert(registro).execute()
     if not res.data:
