@@ -136,6 +136,44 @@ FERRAMENTAS = [
         },
     },
     {
+        "name": "resumo_centro_custo",
+        "description": (
+            "Retorna o relatório de gastos de um centro de custo: total realizado, orçamento e "
+            "utilização percentual no período. Use quando o usuário perguntar sobre gastos por "
+            "departamento, projeto ou centro de custo."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "centro_custo_id": {
+                    "type": "string",
+                    "description": "ID do centro de custo (UUID)",
+                },
+                "inicio": {
+                    "type": "string",
+                    "description": "Data de início no formato YYYY-MM-DD",
+                },
+                "fim": {
+                    "type": "string",
+                    "description": "Data de fim no formato YYYY-MM-DD",
+                },
+            },
+            "required": ["centro_custo_id", "inicio", "fim"],
+        },
+    },
+    {
+        "name": "listar_centros_custo",
+        "description": (
+            "Lista todos os centros de custo ativos da empresa. "
+            "Use quando o usuário perguntar quais departamentos ou projetos existem."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
         "name": "resumo_periodo",
         "description": (
             "Retorna um resumo financeiro rápido de um período: receita total, despesas totais, "
@@ -182,6 +220,10 @@ def execute_tool(nome: str, parametros: dict, tenant_id: str) -> Any:
             return _tool_confirmar_transacao(parametros, tenant_id)
         elif nome == "resumo_periodo":
             return _tool_resumo_periodo(parametros, tenant_id)
+        elif nome == "resumo_centro_custo":
+            return _tool_resumo_centro_custo(parametros, tenant_id)
+        elif nome == "listar_centros_custo":
+            return _tool_listar_centros_custo(parametros, tenant_id)
         else:
             return {"erro": f"Ferramenta desconhecida: {nome}"}
     except Exception as e:
@@ -304,6 +346,85 @@ def _tool_confirmar_transacao(parametros: dict, tenant_id: str) -> dict:
         "confirmados": len(confirmados),
         "nao_encontrados": len(nao_encontrados),
         "mensagem": f"{len(confirmados)} transação(ões) confirmada(s) com sucesso.",
+    }
+
+
+def _tool_listar_centros_custo(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+    res = (
+        client.table("cost_centers")
+        .select("id, name, code, type, budget")
+        .eq("tenant_id", tenant_id)
+        .eq("active", True)
+        .order("name")
+        .execute()
+    )
+    centros = res.data or []
+    return {
+        "total": len(centros),
+        "centros": [
+            {
+                "id": c["id"],
+                "nome": c["name"],
+                "codigo": c["code"],
+                "tipo": c["type"],
+                "orcamento_mensal": float(c["budget"]) if c.get("budget") else None,
+            }
+            for c in centros
+        ],
+    }
+
+
+def _tool_resumo_centro_custo(parametros: dict, tenant_id: str) -> dict:
+    client = get_supabase_client()
+    centro_id = parametros["centro_custo_id"]
+    inicio = parametros["inicio"]
+    fim = parametros["fim"]
+
+    cc_res = (
+        client.table("cost_centers")
+        .select("name, code, budget")
+        .eq("id", centro_id)
+        .eq("tenant_id", tenant_id)
+        .single()
+        .execute()
+    )
+    if not cc_res.data:
+        return {"erro": f"Centro de custo {centro_id} não encontrado"}
+    cc = cc_res.data
+
+    aloc_res = (
+        client.table("transaction_cost_centers")
+        .select("amount, transactions(date, category)")
+        .eq("tenant_id", tenant_id)
+        .eq("cost_center_id", centro_id)
+        .execute()
+    )
+    alocacoes = [
+        a for a in (aloc_res.data or [])
+        if a.get("transactions") and inicio <= a["transactions"]["date"] <= fim
+    ]
+
+    total_gasto = sum(abs(float(a["amount"])) for a in alocacoes)
+    orcamento = float(cc.get("budget") or 0)
+
+    gastos_cat: dict[str, float] = {}
+    for a in alocacoes:
+        cat = a["transactions"].get("category") or "Não categorizado"
+        gastos_cat[cat] = gastos_cat.get(cat, 0) + abs(float(a["amount"]))
+
+    return {
+        "centro": cc["name"],
+        "codigo": cc["code"],
+        "periodo": {"inicio": inicio, "fim": fim},
+        "total_gasto": round(total_gasto, 2),
+        "orcamento_mensal": orcamento,
+        "utilizacao_pct": round((total_gasto / orcamento * 100) if orcamento > 0 else 0, 1),
+        "gastos_por_categoria": sorted(
+            [{"categoria": k, "total": round(v, 2)} for k, v in gastos_cat.items()],
+            key=lambda x: x["total"],
+            reverse=True,
+        )[:5],
     }
 
 

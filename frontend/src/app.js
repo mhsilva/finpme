@@ -16,23 +16,32 @@ import UploadPage from './pages/upload.js';
 import TransactionsPage from './pages/transactions.js';
 import ReportsPage from './pages/reports.js';
 import ChatPage from './pages/chat.js';
+import CentrosCustoPage from './pages/financeiro/centros_custo.js';
 
 // Ícones SVG inline simples
 const icons = {
-  dashboard: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`,
-  upload: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>`,
+  dashboard:    html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`,
+  upload:       html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>`,
   transactions: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`,
-  reports: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
-  chat: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`,
-  logout: html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
+  reports:      html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
+  chat:         html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`,
+  logout:       html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
+  centros:      html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
 };
 
-const NAVEGACAO = [
+const NAVEGACAO_PRINCIPAL = [
   { rota: '/dashboard',    label: 'Dashboard',    icon: icons.dashboard },
   { rota: '/upload',       label: 'Upload',       icon: icons.upload },
   { rota: '/transactions', label: 'Lançamentos',  icon: icons.transactions },
   { rota: '/reports',      label: 'Relatórios',   icon: icons.reports },
-  { rota: '/chat',         label: 'Agente IA',    icon: icons.chat },
+];
+
+const NAVEGACAO_FINANCEIRO = [
+  { rota: '/financeiro/centros-custo', label: 'Centros de Custo', icon: icons.centros },
+];
+
+const NAVEGACAO_BOTTOM = [
+  { rota: '/chat', label: 'Agente IA', icon: icons.chat },
 ];
 
 function Sidebar({ rotaAtual, onNavegar, onSair }) {
@@ -55,8 +64,46 @@ function Sidebar({ rotaAtual, onNavegar, onSair }) {
       </div>
 
       <!-- Links de navegação -->
-      <nav class="flex-1 px-3 py-3 space-y-0.5">
-        ${NAVEGACAO.map(item => html`
+      <nav class="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+        ${NAVEGACAO_PRINCIPAL.map(item => html`
+          <a
+            key=${item.rota}
+            href="#"
+            class=${`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              rotaAtual === item.rota
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            onClick=${(e) => { e.preventDefault(); onNavegar(item.rota); }}
+          >
+            ${item.icon}
+            ${item.label}
+          </a>
+        `)}
+
+        <!-- Seção Financeiro -->
+        <div class="pt-3 pb-1">
+          <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financeiro</p>
+        </div>
+        ${NAVEGACAO_FINANCEIRO.map(item => html`
+          <a
+            key=${item.rota}
+            href="#"
+            class=${`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              rotaAtual === item.rota
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            onClick=${(e) => { e.preventDefault(); onNavegar(item.rota); }}
+          >
+            ${item.icon}
+            ${item.label}
+          </a>
+        `)}
+
+        <!-- Separador -->
+        <div class="pt-2 pb-1 border-t border-gray-100 mt-2"></div>
+        ${NAVEGACAO_BOTTOM.map(item => html`
           <a
             key=${item.rota}
             href="#"
@@ -141,12 +188,13 @@ function App() {
   // Layout autenticado com sidebar
   let PaginaAtual;
   switch (rota) {
-    case '/dashboard':    PaginaAtual = DashboardPage; break;
-    case '/upload':       PaginaAtual = UploadPage; break;
-    case '/transactions': PaginaAtual = TransactionsPage; break;
-    case '/reports':      PaginaAtual = ReportsPage; break;
-    case '/chat':         PaginaAtual = ChatPage; break;
-    default:              PaginaAtual = DashboardPage;
+    case '/dashboard':                PaginaAtual = DashboardPage; break;
+    case '/upload':                   PaginaAtual = UploadPage; break;
+    case '/transactions':             PaginaAtual = TransactionsPage; break;
+    case '/reports':                  PaginaAtual = ReportsPage; break;
+    case '/chat':                     PaginaAtual = ChatPage; break;
+    case '/financeiro/centros-custo': PaginaAtual = CentrosCustoPage; break;
+    default:                          PaginaAtual = DashboardPage;
   }
 
   return html`
