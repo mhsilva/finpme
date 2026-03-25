@@ -77,7 +77,7 @@ function ModalCentro({ centro, onSalvar, onFechar }) {
           <h2 class="text-base font-semibold text-gray-900">
             ${centro ? 'Editar Centro de Custo' : 'Novo Centro de Custo'}
           </h2>
-          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
         <form onSubmit=${salvar} class="px-6 py-4 space-y-4">
           ${erro && html`<p class="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">${erro}</p>`}
@@ -184,7 +184,7 @@ function RelatorioSlideOver({ centro, onFechar }) {
             <p class="text-xs text-gray-500 font-mono">${centro.code}</p>
             <h2 class="text-base font-semibold text-gray-900">${centro.name}</h2>
           </div>
-          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
 
         <!-- Filtro de período -->

@@ -196,6 +196,41 @@ class AgentChatRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Contas Bancárias
+# ---------------------------------------------------------------------------
+
+class BankAccountCreate(BaseModel):
+    name: str
+    type: str = "checking"  # checking | savings | payment
+    bank_code: Optional[str] = None
+    branch: Optional[str] = None
+    account_number: Optional[str] = None
+    balance: Optional[Decimal] = Decimal("0")
+    balance_date: Optional[date] = None
+
+
+class BankAccountUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    bank_code: Optional[str] = None
+    branch: Optional[str] = None
+    account_number: Optional[str] = None
+    balance: Optional[Decimal] = None
+    balance_date: Optional[date] = None
+    active: Optional[bool] = None
+
+
+class BankAccount(BankAccountCreate):
+    id: UUID
+    tenant_id: UUID
+    active: bool = True
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
 # Contas a Pagar / Receber
 # ---------------------------------------------------------------------------
 

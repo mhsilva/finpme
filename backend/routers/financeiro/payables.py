@@ -25,7 +25,7 @@ def _marcar_vencidas(tenant_id: str):
     ).eq("status", "pending").lt("due_date", hoje).execute()
 
 
-@router.get("/")
+@router.get("")
 def listar_contas(
     request: Request,
     type: Optional[str] = Query(None, description="payable | receivable"),
@@ -89,7 +89,7 @@ def resumo_contas(request: Request):
     }
 
 
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 def criar_conta(request: Request, dados: PayableReceivableCreate):
     """
     Cria conta(s) a pagar/receber.

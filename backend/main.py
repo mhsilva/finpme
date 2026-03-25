@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from routers import ai, auth, reports, transactions, upload
-from routers.financeiro import centros_custo, payables
+from routers.financeiro import bank_accounts, centros_custo, conciliacao, payables
 
 load_dotenv()
 
@@ -145,6 +145,16 @@ app.include_router(
     payables.router,
     prefix="/financeiro/contas",
     tags=["Financeiro — Contas a Pagar/Receber"],
+)
+app.include_router(
+    conciliacao.router,
+    prefix="/financeiro/conciliacao",
+    tags=["Financeiro — Conciliação Bancária"],
+)
+app.include_router(
+    bank_accounts.router,
+    prefix="/financeiro/contas-bancarias",
+    tags=["Financeiro — Contas Bancárias"],
 )
 
 

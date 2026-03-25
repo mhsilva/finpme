@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("")
 def listar_centros(request: Request):
     """Lista todos os centros de custo ativos do tenant."""
     tenant_id = request.state.tenant_id
@@ -30,7 +30,7 @@ def listar_centros(request: Request):
     return res.data or []
 
 
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 def criar_centro(request: Request, dados: CostCenterCreate):
     """Cria um novo centro de custo."""
     tenant_id = request.state.tenant_id

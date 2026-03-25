@@ -50,11 +50,38 @@ async def _processar_arquivo_em_background(
         # 1. Baixa do Storage
         conteudo = client.storage.from_("extratos").download(storage_path)
 
-        # 2. Parseia conforme tipo
+        # 2. Parseia conforme tipo e roteia para tabela correta
+        if file_type == "xml":
+            # NF-e → gera contas a pagar/receber, não lançamentos
+            notas = parse_nfe_xml(conteudo)
+            registros_pr = [
+                {
+                    "tenant_id":    tenant_id,
+                    "type":         n["type"],
+                    "description":  n["description"],
+                    "amount":       float(n["amount"]),
+                    "due_date":     n["due_date"],
+                    "contact_name": n.get("contact_name"),
+                    "contact_doc":  n.get("contact_doc"),
+                    "notes":        n.get("notes"),
+                    "status":       "pending",
+                }
+                for n in notas
+            ]
+            if registros_pr:
+                client.table("payables_receivables").insert(registros_pr).execute()
+
+            client.table("uploaded_files").update({
+                "status": "done",
+                "processed_at": datetime.utcnow().isoformat(),
+            }).eq("id", file_id).execute()
+
+            logger.info(f"NF-e {file_id}: {len(registros_pr)} conta(s) P/R gerada(s)")
+            return
+
+        # OFX / CSV → extrato bancário → gera lançamentos (transactions)
         if file_type == "ofx":
             transacoes = parse_ofx(conteudo)
-        elif file_type == "xml":
-            transacoes = parse_nfe_xml(conteudo)
         elif file_type == "csv":
             transacoes = parse_csv(conteudo)
         else:

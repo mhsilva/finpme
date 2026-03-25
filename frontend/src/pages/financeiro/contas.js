@@ -109,7 +109,7 @@ function ModalConta({ tipo, conta, onSalvar, onFechar }) {
           <h2 class="text-base font-semibold text-gray-900">
             ${conta ? 'Editar Conta' : form.type === 'payable' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber'}
           </h2>
-          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+          <button onClick=${onFechar} class="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
         <form onSubmit=${salvar} class="px-6 py-4 space-y-4">
           ${erro && html`<p class="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">${erro}</p>`}
