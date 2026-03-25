@@ -30,9 +30,9 @@ def generate_dre(tenant_id: str, start: date, end: date) -> dict:
     """
     Gera o DRE para o tenant no período especificado.
 
-    Considera transações:
-    - Confirmadas manualmente pelo usuário (confirmed = TRUE), OU
-    - Categorizadas pela IA com confiança > 0.85
+    Considera apenas transações confirmadas (confirmed = TRUE):
+    - Revisadas pelo usuário na tela de Lançamentos, OU
+    - Fechadas via conciliação bancária.
 
     Retorna estrutura completa com valores e percentuais sobre receita líquida.
     """
@@ -40,8 +40,9 @@ def generate_dre(tenant_id: str, start: date, end: date) -> dict:
 
     resultado = (
         client.table("transactions")
-        .select("dre_line, amount, confirmed, ai_confidence")
+        .select("dre_line, amount")
         .eq("tenant_id", tenant_id)
+        .eq("confirmed", True)
         .gte("date", start.isoformat())
         .lte("date", end.isoformat())
         .not_.is_("dre_line", "null")
@@ -49,9 +50,8 @@ def generate_dre(tenant_id: str, start: date, end: date) -> dict:
     )
 
     transacoes = resultado.data or []
-    logger.info(f"DRE: {len(transacoes)} transações encontradas para tenant {tenant_id}")
+    logger.info(f"DRE: {len(transacoes)} transações confirmadas para tenant {tenant_id}")
 
-    # Agrupa por linha do DRE (apenas transações confiáveis)
     totais: dict[str, Decimal] = {
         "receita_bruta": Decimal("0"),
         "deducoes": Decimal("0"),
@@ -63,16 +63,9 @@ def generate_dre(tenant_id: str, start: date, end: date) -> dict:
     }
 
     for t in transacoes:
-        confirmado = t.get("confirmed", False)
-        confianca = float(t.get("ai_confidence") or 0)
-        linha = t.get("dre_line", "outros")
-
-        if not (confirmado or confianca > 0.85):
-            continue
-
+        linha = t.get("dre_line") or "outros"
         if linha not in totais:
             linha = "outros"
-
         totais[linha] += Decimal(str(t["amount"]))
 
     # Cálculos do DRE

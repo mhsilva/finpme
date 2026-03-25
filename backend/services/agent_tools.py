@@ -854,6 +854,7 @@ def _tool_resumo_periodo(parametros: dict, tenant_id: str) -> dict:
         client.table("transactions")
         .select("amount, category")
         .eq("tenant_id", tenant_id)
+        .eq("confirmed", True)
         .gte("date", inicio)
         .lte("date", fim)
         .execute()
