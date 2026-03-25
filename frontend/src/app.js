@@ -17,6 +17,7 @@ import TransactionsPage from './pages/transactions.js';
 import ReportsPage from './pages/reports.js';
 import ChatPage from './pages/chat.js';
 import CentrosCustoPage from './pages/financeiro/centros_custo.js';
+import ContasPage from './pages/financeiro/contas.js';
 
 // Ícones SVG inline simples
 const icons = {
@@ -27,6 +28,7 @@ const icons = {
   chat:         html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`,
   logout:       html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
   centros:      html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
+  contas:       html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
 };
 
 const NAVEGACAO_PRINCIPAL = [
@@ -37,6 +39,7 @@ const NAVEGACAO_PRINCIPAL = [
 ];
 
 const NAVEGACAO_FINANCEIRO = [
+  { rota: '/financeiro/contas',        label: 'Contas P/R',       icon: icons.contas },
   { rota: '/financeiro/centros-custo', label: 'Centros de Custo', icon: icons.centros },
 ];
 
@@ -193,6 +196,7 @@ function App() {
     case '/transactions':             PaginaAtual = TransactionsPage; break;
     case '/reports':                  PaginaAtual = ReportsPage; break;
     case '/chat':                     PaginaAtual = ChatPage; break;
+    case '/financeiro/contas':        PaginaAtual = ContasPage; break;
     case '/financeiro/centros-custo': PaginaAtual = CentrosCustoPage; break;
     default:                          PaginaAtual = DashboardPage;
   }

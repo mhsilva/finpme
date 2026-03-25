@@ -196,6 +196,59 @@ class AgentChatRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Contas a Pagar / Receber
+# ---------------------------------------------------------------------------
+
+class PayableReceivableCreate(BaseModel):
+    type: str  # payable | receivable
+    description: str
+    amount: Decimal
+    due_date: date
+    contact_name: Optional[str] = None
+    contact_doc: Optional[str] = None
+    bank_account_id: Optional[UUID] = None
+    cost_center_id: Optional[UUID] = None
+    installments_total: int = Field(default=1, ge=1, le=360)
+    recurrence: Optional[str] = None  # monthly | weekly | yearly
+    notes: Optional[str] = None
+
+
+class PayableReceivableUpdate(BaseModel):
+    description: Optional[str] = None
+    amount: Optional[Decimal] = None
+    due_date: Optional[date] = None
+    status: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_doc: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PayableReceivable(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    type: str
+    description: str
+    amount: Decimal
+    due_date: date
+    paid_date: Optional[date] = None
+    status: str
+    contact_name: Optional[str] = None
+    contact_doc: Optional[str] = None
+    bank_account_id: Optional[UUID] = None
+    cost_center_id: Optional[UUID] = None
+    installments_total: int = 1
+    installments_num: int = 1
+    parent_id: Optional[UUID] = None
+    recurrence: Optional[str] = None
+    transaction_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
 # Centros de Custo
 # ---------------------------------------------------------------------------
 

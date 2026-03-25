@@ -171,6 +171,52 @@ export async function sendAgentMessage(messages, onChunk, onToolStart, onToolRes
 }
 
 // ---------------------------------------------------------------------------
+// Financeiro — Contas a Pagar/Receber
+// ---------------------------------------------------------------------------
+
+export function getContas(filtros = {}) {
+  const params = new URLSearchParams();
+  if (filtros.type)   params.set('type', filtros.type);
+  if (filtros.status) params.set('status', filtros.status);
+  if (filtros.inicio) params.set('inicio', filtros.inicio);
+  if (filtros.fim)    params.set('fim', filtros.fim);
+  const q = params.toString() ? `?${params}` : '';
+  return apiFetch(`/financeiro/contas${q}`);
+}
+
+export function getResumoContas() {
+  return apiFetch('/financeiro/contas/resumo');
+}
+
+export function createConta(dados) {
+  return apiFetch('/financeiro/contas', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function updateConta(id, dados) {
+  return apiFetch(`/financeiro/contas/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function pagarConta(id, opcoes = {}) {
+  const params = new URLSearchParams();
+  if (opcoes.paid_date)      params.set('paid_date', opcoes.paid_date);
+  if (opcoes.transaction_id) params.set('transaction_id', opcoes.transaction_id);
+  if (opcoes.valor_pago)     params.set('valor_pago', opcoes.valor_pago);
+  const q = params.toString() ? `?${params}` : '';
+  return apiFetch(`/financeiro/contas/${id}/pagar${q}`, { method: 'POST' });
+}
+
+export function cancelarConta(id, todasParcelas = false) {
+  const q = todasParcelas ? '?todas_parcelas=true' : '';
+  return apiFetch(`/financeiro/contas/${id}${q}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
 // Financeiro — Centros de Custo
 // ---------------------------------------------------------------------------
 
