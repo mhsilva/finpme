@@ -196,6 +196,40 @@ class AgentChatRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Centros de Custo
+# ---------------------------------------------------------------------------
+
+class CostCenterBase(BaseModel):
+    name: str
+    code: str
+    type: str = "department"  # department | project | product
+    budget: Optional[Decimal] = None
+    parent_id: Optional[UUID] = None
+
+
+class CostCenterCreate(CostCenterBase):
+    pass
+
+
+class CostCenterUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    type: Optional[str] = None
+    budget: Optional[Decimal] = None
+    active: Optional[bool] = None
+
+
+class CostCenter(CostCenterBase):
+    id: UUID
+    tenant_id: UUID
+    active: bool = True
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
 # Plano de contas
 # ---------------------------------------------------------------------------
 

@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from routers import ai, auth, reports, transactions, upload
+from routers.financeiro import centros_custo
 
 load_dotenv()
 
@@ -132,6 +133,13 @@ app.include_router(upload.router, prefix="/upload", tags=["Upload de Arquivos"])
 app.include_router(transactions.router, prefix="/transactions", tags=["Transações"])
 app.include_router(reports.router, prefix="/reports", tags=["Relatórios"])
 app.include_router(ai.router, prefix="/ai", tags=["Inteligência Artificial"])
+
+# Módulo Financeiro
+app.include_router(
+    centros_custo.router,
+    prefix="/financeiro/centros-custo",
+    tags=["Financeiro — Centros de Custo"],
+)
 
 
 # ---------------------------------------------------------------------------

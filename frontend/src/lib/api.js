@@ -171,6 +171,47 @@ export async function sendAgentMessage(messages, onChunk, onToolStart, onToolRes
 }
 
 // ---------------------------------------------------------------------------
+// Financeiro — Centros de Custo
+// ---------------------------------------------------------------------------
+
+export function getCentrosCusto() {
+  return apiFetch('/financeiro/centros-custo');
+}
+
+export function createCentroCusto(dados) {
+  return apiFetch('/financeiro/centros-custo', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function updateCentroCusto(id, dados) {
+  return apiFetch(`/financeiro/centros-custo/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function deleteCentroCusto(id) {
+  return apiFetch(`/financeiro/centros-custo/${id}`, { method: 'DELETE' });
+}
+
+export function getRelatorioCentroCusto(id, inicio, fim) {
+  return apiFetch(`/financeiro/centros-custo/${id}/relatorio?inicio=${inicio}&fim=${fim}`);
+}
+
+export function alocarTransacaoCentroCusto(transactionId, costCenterId, percentage = 100) {
+  return apiFetch(
+    `/financeiro/centros-custo/transacao/${transactionId}?cost_center_id=${costCenterId}&percentage=${percentage}`,
+    { method: 'POST' },
+  );
+}
+
+export function removerAlocacaoCentroCusto(transactionId) {
+  return apiFetch(`/financeiro/centros-custo/transacao/${transactionId}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 
