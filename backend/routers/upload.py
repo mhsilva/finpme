@@ -11,6 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 
 from db.supabase import get_supabase_client
 from services.categorizer import categorizar_transacoes
+from services.intelligent_parser import parse_com_ia
 from services.parsers.csv_parser import parse_csv
 from services.parsers.nfe_parser import parse_nfe_xml
 from services.parsers.ofx_parser import parse_ofx
@@ -18,12 +19,59 @@ from services.parsers.ofx_parser import parse_ofx
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-TIPOS_PERMITIDOS = {"ofx", "xml", "csv"}
+# Parsers nativos (rápidos, sem custo de tokens)
+PARSERS_NATIVOS = {"ofx", "xml", "csv"}
+# Formatos que vão para o Claude (PDF, imagens)
+TIPOS_IA = {"pdf", "png", "jpg", "jpeg", "webp"}
+TIPOS_PERMITIDOS = PARSERS_NATIVOS | TIPOS_IA
 
 
 def _extensao(filename: str) -> str:
     """Extrai extensão do arquivo em minúsculas."""
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+
+async def _salvar_contas_pr(client, tenant_id: str, file_id: str, notas: list):
+    """Insere contas a pagar/receber geradas por NF-e ou parse IA."""
+    registros = [
+        {
+            "tenant_id":    tenant_id,
+            "type":         n["type"],
+            "description":  n["description"],
+            "amount":       float(n["amount"]),
+            "due_date":     n["due_date"],
+            "contact_name": n.get("contact_name"),
+            "contact_doc":  n.get("contact_doc"),
+            "notes":        n.get("notes"),
+            "status":       "pending",
+        }
+        for n in notas
+    ]
+    if registros:
+        client.table("payables_receivables").insert(registros).execute()
+
+
+async def _salvar_transacoes(client, tenant_id: str, file_id: str, source: str, transacoes: list):
+    """Insere transações bancárias categorizadas."""
+    registros = [
+        {
+            "tenant_id":      tenant_id,
+            "date":           t["date"],
+            "description":    t["description"],
+            "amount":         float(t["amount"]),
+            "category":       t.get("category"),
+            "subcategory":    t.get("subcategory"),
+            "dre_line":       t.get("dre_line"),
+            "source":         source,
+            "source_file_id": file_id,
+            "ai_categorized": True,
+            "ai_confidence":  t.get("confidence"),
+            "confirmed":      False,
+        }
+        for t in transacoes
+    ]
+    if registros:
+        client.table("transactions").insert(registros).execute()
 
 
 async def _processar_arquivo_em_background(
@@ -54,29 +102,34 @@ async def _processar_arquivo_em_background(
         if file_type == "xml":
             # NF-e → gera contas a pagar/receber, não lançamentos
             notas = parse_nfe_xml(conteudo)
-            registros_pr = [
-                {
-                    "tenant_id":    tenant_id,
-                    "type":         n["type"],
-                    "description":  n["description"],
-                    "amount":       float(n["amount"]),
-                    "due_date":     n["due_date"],
-                    "contact_name": n.get("contact_name"),
-                    "contact_doc":  n.get("contact_doc"),
-                    "notes":        n.get("notes"),
-                    "status":       "pending",
-                }
-                for n in notas
-            ]
-            if registros_pr:
-                client.table("payables_receivables").insert(registros_pr).execute()
+            await _salvar_contas_pr(client, tenant_id, file_id, notas)
+            client.table("uploaded_files").update({
+                "status": "done",
+                "processed_at": datetime.utcnow().isoformat(),
+            }).eq("id", file_id).execute()
+            logger.info(f"NF-e {file_id}: {len(notas)} conta(s) P/R gerada(s)")
+            return
+
+        if file_type in TIPOS_IA:
+            # PDF / imagem → parse inteligente via Claude
+            resultado = parse_com_ia(conteudo, file_type, storage_path.rsplit("/", 1)[-1])
+
+            if resultado["tipo"] == "invalido":
+                raise ValueError(f"Documento não reconhecido: {resultado.get('motivo')}")
+
+            if resultado["tipo"] == "nota":
+                await _salvar_contas_pr(client, tenant_id, file_id, [resultado["dados"]])
+            else:
+                # extrato → transações
+                transacoes = resultado["dados"] or []
+                transacoes_categorizadas = await categorizar_transacoes(transacoes, tenant_id)
+                await _salvar_transacoes(client, tenant_id, file_id, file_type, transacoes_categorizadas)
 
             client.table("uploaded_files").update({
                 "status": "done",
                 "processed_at": datetime.utcnow().isoformat(),
             }).eq("id", file_id).execute()
-
-            logger.info(f"NF-e {file_id}: {len(registros_pr)} conta(s) P/R gerada(s)")
+            logger.info(f"Upload IA {file_id}: processado como '{resultado['tipo']}'")
             return
 
         # OFX / CSV → extrato bancário → gera lançamentos (transactions)
@@ -93,26 +146,7 @@ async def _processar_arquivo_em_background(
         transacoes_categorizadas = await categorizar_transacoes(transacoes, tenant_id)
 
         # 4. Salva no banco
-        registros = [
-            {
-                "tenant_id": tenant_id,
-                "date": t["date"],
-                "description": t["description"],
-                "amount": float(t["amount"]),
-                "category": t.get("category"),
-                "subcategory": t.get("subcategory"),
-                "dre_line": t.get("dre_line"),
-                "source": file_type,
-                "source_file_id": file_id,
-                "ai_categorized": True,
-                "ai_confidence": t.get("confidence"),
-                "confirmed": False,
-            }
-            for t in transacoes_categorizadas
-        ]
-
-        if registros:
-            client.table("transactions").insert(registros).execute()
+        await _salvar_transacoes(client, tenant_id, file_id, file_type, transacoes_categorizadas)
 
         # 5. Atualiza status para 'done'
         client.table("uploaded_files").update({
@@ -120,7 +154,7 @@ async def _processar_arquivo_em_background(
             "processed_at": datetime.utcnow().isoformat(),
         }).eq("id", file_id).execute()
 
-        logger.info(f"Arquivo {file_id} processado com sucesso: {len(registros)} lançamentos salvos")
+        logger.info(f"Arquivo {file_id} processado: {len(transacoes_categorizadas)} lançamentos salvos")
 
     except Exception as e:
         logger.error(f"Erro ao processar arquivo {file_id}: {e}")
