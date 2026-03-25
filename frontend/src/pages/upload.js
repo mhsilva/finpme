@@ -1,6 +1,7 @@
 /**
  * Página de Upload de Arquivos.
- * Drag-and-drop para OFX, XML e CSV com polling de status.
+ * Drag-and-drop para OFX, XML, CSV, PDF e imagens com polling de status.
+ * Arquivos PDF e imagens são processados via Claude (parse inteligente).
  */
 
 import { useState, useEffect, useRef } from 'preact/hooks';
@@ -53,8 +54,8 @@ export default function UploadPage() {
 
   async function processar(arquivo) {
     const ext = arquivo.name.split('.').pop().toLowerCase();
-    if (!['ofx', 'xml', 'csv'].includes(ext)) {
-      setErro(`Tipo de arquivo não suportado: .${ext}. Use OFX, XML ou CSV.`);
+    if (!['ofx', 'xml', 'csv', 'pdf', 'png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
+      setErro(`Tipo de arquivo não suportado: .${ext}. Use OFX, CSV, XML NF-e, PDF ou imagem.`);
       return;
     }
 
@@ -94,8 +95,8 @@ export default function UploadPage() {
   return html`
     <div class="p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h2 class="text-xl font-semibold text-gray-900">Upload de Extratos</h2>
-        <p class="text-sm text-gray-500">Envie arquivos OFX, XML (NF-e) ou CSV para importação automática</p>
+        <h2 class="text-xl font-semibold text-gray-900">Upload de Documentos Financeiros</h2>
+        <p class="text-sm text-gray-500">Envie extratos, notas fiscais, boletos ou recibos — a IA identifica e processa automaticamente</p>
       </div>
 
       <!-- Mensagens de feedback -->
@@ -125,7 +126,7 @@ export default function UploadPage() {
           ref=${inputRef}
           type="file"
           class="hidden"
-          accept=".ofx,.xml,.csv"
+          accept=".ofx,.xml,.csv,.pdf,.png,.jpg,.jpeg,.webp"
           multiple
           onChange=${onArquivosSelecionados}
         />
@@ -140,7 +141,7 @@ export default function UploadPage() {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
             <p class="text-sm font-medium text-gray-700">Arraste arquivos aqui ou <span class="text-brand-600">clique para selecionar</span></p>
-            <p class="text-xs text-gray-400 mt-1">OFX · XML NF-e · CSV — múltiplos arquivos aceitos</p>
+            <p class="text-xs text-gray-400 mt-1">OFX · CSV · XML NF-e · PDF · PNG · JPG — múltiplos arquivos aceitos</p>
           `
         }
       </div>
