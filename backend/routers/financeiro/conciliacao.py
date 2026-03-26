@@ -190,6 +190,7 @@ def sugestoes_conciliacao(
             client.table("transactions")
             .select("id, date, description, amount, category, source")
             .eq("tenant_id", tenant_id)
+            .eq("confirmed", True)
             .order("date", desc=True)
             .limit(200)
             .execute()
