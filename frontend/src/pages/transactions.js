@@ -40,6 +40,7 @@ export default function TransactionsPage() {
   const [editandoId, setEditandoId] = useState(null);
   const [filtros, setFiltros] = useState({ inicio: inicioMes(), fim: hoje(), tipo: '' });
   const [salvando, setSalvando] = useState(null);
+  const [aba, setAba] = useState('pendentes'); // 'pendentes' | 'revisadas'
 
   useEffect(() => {
     carregarTransacoes();
@@ -74,12 +75,21 @@ export default function TransactionsPage() {
     setSalvando(id);
     try {
       await updateTransaction(id, { confirmed: true });
-      setTransacoes(prev => prev.map(t => t.id === id ? { ...t, confirmed: true } : t));
+      // remove da lista de pendentes após confirmar
+      setTransacoes(prev => prev.filter(t => t.id !== id));
     } catch {
       // silencia
     } finally {
       setSalvando(null);
     }
+  }
+
+  async function confirmarTodos() {
+    const pendentes = transacoes.filter(t => !t.confirmed);
+    for (const t of pendentes) {
+      await updateTransaction(t.id, { confirmed: true });
+    }
+    setTransacoes([]);
   }
 
   async function remover(id) {
@@ -92,11 +102,47 @@ export default function TransactionsPage() {
     }
   }
 
+  const visiveis = transacoes.filter(t => aba === 'pendentes' ? !t.confirmed : t.confirmed);
+
   return html`
     <div class="p-6 max-w-6xl mx-auto space-y-5">
-      <div>
-        <h2 class="text-xl font-semibold text-gray-900">Lançamentos</h2>
-        <p class="text-sm text-gray-500">${transacoes.length} transações encontradas</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-900">Lançamentos</h2>
+          <p class="text-sm text-gray-500">Revise e confirme os lançamentos importados</p>
+        </div>
+        ${aba === 'pendentes' && transacoes.filter(t => !t.confirmed).length > 0 && html`
+          <button
+            onClick=${confirmarTodos}
+            class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            Confirmar todos
+          </button>
+        `}
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <button
+          onClick=${() => setAba('pendentes')}
+          class=${'px-4 py-1.5 rounded-md text-sm font-medium transition-colors ' + (aba === 'pendentes' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}
+        >
+          Pendentes
+          ${transacoes.filter(t => !t.confirmed).length > 0 && html`
+            <span class="ml-1.5 bg-amber-100 text-amber-700 text-xs font-semibold px-1.5 py-0.5 rounded-full">
+              ${transacoes.filter(t => !t.confirmed).length}
+            </span>
+          `}
+        </button>
+        <button
+          onClick=${() => setAba('revisadas')}
+          class=${'px-4 py-1.5 rounded-md text-sm font-medium transition-colors ' + (aba === 'revisadas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}
+        >
+          Revisadas
+        </button>
       </div>
 
       <!-- Filtros -->
@@ -137,8 +183,20 @@ export default function TransactionsPage() {
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
         ${carregando
           ? html`<div class="flex justify-center py-12"><div class="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>`
-          : transacoes.length === 0
-          ? html`<p class="text-sm text-gray-400 text-center py-12">Nenhuma transação encontrada no período.</p>`
+          : visiveis.length === 0
+          ? html`
+            <div class="text-center py-12">
+              ${aba === 'pendentes'
+                ? html`
+                  <svg class="w-10 h-10 text-emerald-200 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p class="text-sm text-gray-400">Nenhum lançamento pendente de revisão.</p>
+                `
+                : html`<p class="text-sm text-gray-400">Nenhum lançamento revisado no período.</p>`
+              }
+            </div>
+          `
           : html`
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
@@ -153,12 +211,11 @@ export default function TransactionsPage() {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                  ${transacoes.map(t => html`
+                  ${visiveis.map(t => html`
                     <tr key=${t.id} class="hover:bg-gray-50 transition-colors">
                       <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${t.date}</td>
                       <td class="px-4 py-3 text-gray-800 max-w-xs">
                         <p class="truncate">${t.description}</p>
-                        ${t.confirmed && html`<span class="text-xs text-emerald-600">✓ Confirmado</span>`}
                       </td>
                       <td class="px-4 py-3">
                         ${editandoId === t.id
@@ -201,7 +258,7 @@ export default function TransactionsPage() {
                               onClick=${() => confirmar(t.id)}
                               disabled=${salvando === t.id}
                               class="text-gray-400 hover:text-emerald-500 transition-colors disabled:opacity-40"
-                              title="Confirmar pagamento"
+                              title="Confirmar lançamento"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
