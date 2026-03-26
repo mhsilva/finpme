@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from db.supabase import get_supabase_client
 from models.schemas import TransactionUpdate
+from routers.reports import invalidar_cache_tenant
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -101,6 +102,9 @@ async def atualizar_transacao(
         .eq("id", transaction_id)
         .execute()
     )
+
+    if atualizacoes.get("confirmed"):
+        invalidar_cache_tenant(tenant_id)
 
     logger.info(f"Transação {transaction_id} atualizada pelo tenant {tenant_id}")
     return resultado.data[0] if resultado.data else {"id": transaction_id, **atualizacoes}

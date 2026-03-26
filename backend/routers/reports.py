@@ -70,6 +70,29 @@ def _cache_get(chave: str):
         return None
 
 
+def invalidar_cache_tenant(tenant_id: str):
+    """Invalida cache de DRE e cashflow para o tenant nos últimos 6 meses."""
+    redis = _get_redis()
+    if not redis:
+        return
+    try:
+        from datetime import date as _date
+        hoje = _date.today()
+        for i in range(6):
+            mes = hoje.month - i
+            ano = hoje.year
+            while mes <= 0:
+                mes += 12
+                ano -= 1
+            inicio = f"{ano}-{mes:02d}-01"
+            fim_dia = [31,28,31,30,31,30,31,31,30,31,30,31][mes - 1]
+            fim = f"{ano}-{mes:02d}-{fim_dia:02d}"
+            redis.delete(f"dre:{tenant_id}:{inicio}:{fim}")
+            redis.delete(f"cashflow:{tenant_id}:{inicio}:{fim}")
+    except Exception as e:
+        logger.warning(f"Erro ao invalidar cache: {e}")
+
+
 def _cache_set(chave: str, valor: dict, ttl_segundos: int = 3600):
     redis = _get_redis()
     if not redis:
