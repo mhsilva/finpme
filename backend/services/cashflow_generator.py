@@ -39,6 +39,7 @@ def generate_cashflow(tenant_id: str, start: date, end: date) -> dict:
         client.table("transactions")
         .select("date, amount")
         .eq("tenant_id", tenant_id)
+        .eq("confirmed", True)
         .gte("date", start.isoformat())
         .lte("date", end.isoformat())
         .order("date")
@@ -46,7 +47,7 @@ def generate_cashflow(tenant_id: str, start: date, end: date) -> dict:
     )
 
     transacoes = resultado.data or []
-    logger.info(f"Fluxo de caixa: {len(transacoes)} transações para tenant {tenant_id}")
+    logger.info(f"Fluxo de caixa: {len(transacoes)} transações confirmadas para tenant {tenant_id}")
 
     # Agrupa por semana
     entradas_por_semana: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
